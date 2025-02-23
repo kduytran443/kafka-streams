@@ -1,0 +1,70 @@
+---
+version: '3.6'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.1.0
+    platform: linux/amd64
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - "kafka_streams_test"
+
+  broker:
+    image: confluentinc/cp-server:7.1.0
+    platform: linux/amd64
+    hostname: broker
+    container_name: broker
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker:9092,PLAINTEXT_HOST://localhost:29092"
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+    networks:
+      - "kafka_streams_test"
+
+  ui-kafka:
+    container_name: ui-kafka
+    image: provectuslabs/kafka-ui:latest
+    depends_on:
+      - zookeeper
+      - broker
+    ports:
+      - "29091:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: "local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "broker:9092,broker:29092,localhost:29092,localhost:9092"
+      KAFKA_CLUSTERS_1_NAME: "local-1"
+      KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS: "broker:9092,broker:29092,localhost:29092,localhost:9092"
+      KAFKA_CLUSTERS_2_NAME: "local-2"
+      KAFKA_CLUSTERS_2_BOOTSTRAPSERVERS: "broker:9092,broker:29092,localhost:29092,localhost:9092"
+      KAFKA_CLUSTERS_0_ZOOKEEPER: "zookeeper:2181"
+    networks:
+      - "kafka_streams_test"
+
+networks:
+  kafka_streams_test:
+    driver: "bridge"

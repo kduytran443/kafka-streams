@@ -13,19 +13,24 @@ import java.util.Arrays;
 @Slf4j
 public class GreetingsTopology {
 
-    public static final String GREETING = "practice_topic_greetings";
-    public static final String GREETING_UPPERCASE = "practice_topic_greetings_uppercase";
+    public static final String TOPIC_GREETINGS = "practice_topic_greetings";
+    public static final String TOPIC_SPANISH_GREETINGS = "practice_topic_spanish_greetings";
+    public static final String TOPIC_GREETINGS_UPPERCASE = "practice_topic_greetings_uppercase";
 
     public static Topology buildTopology() {
         StreamsBuilder builder = new StreamsBuilder();
 
         // Create greetingStream by defining Topic, Serdes
-        var greetingsStream = builder.stream(GREETING, Consumed.with(Serdes.String(), Serdes.String()));
-
+        var greetingsStream = builder.stream(TOPIC_GREETINGS, Consumed.with(Serdes.String(), Serdes.String()));
         greetingsStream.peek((key, value) -> log.info("[GREETING] {}: {}", key, value));
 
+        var spanishGreetingsStream = builder.stream(TOPIC_SPANISH_GREETINGS, Consumed.with(Serdes.String(), Serdes.String()));
+        spanishGreetingsStream.peek((key, value) -> log.info("[SPANISH] {}: {}", key, value));
+
+        var mergedStream = greetingsStream.merge(spanishGreetingsStream);
+
         // Processing logic
-        var modifiedStream = greetingsStream
+        var modifiedStream = mergedStream
                 .peek((key, value) -> log.info("Skip = {}", value.toUpperCase().equals(value)))
                 .filterNot((key, value) -> value.toUpperCase().equals(value)) // Skip already Upper text
                 .map((readOnlyKey, value) -> KeyValue.pair(readOnlyKey.toUpperCase(), value.toUpperCase()))
@@ -35,7 +40,7 @@ public class GreetingsTopology {
                 });
 
         // Sink processor
-        modifiedStream.to(GREETING_UPPERCASE, Produced.with(Serdes.String(), Serdes.String()));
+        modifiedStream.to(TOPIC_GREETINGS_UPPERCASE, Produced.with(Serdes.String(), Serdes.String()));
         modifiedStream.peek((key, value) -> log.info("[GREETING_UPPERCASE] {}: {}", key, value));
 
         return builder.build();

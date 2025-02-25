@@ -29,7 +29,10 @@ public class GreetingsStreamApp {
         Properties boostrapProperties = getProperties();
 
         // Create topics
-        createTopics(boostrapProperties, List.of(GreetingsTopology.GREETING, GreetingsTopology.GREETING_UPPERCASE));
+        createTopics(boostrapProperties,
+                List.of(GreetingsTopology.TOPIC_GREETINGS,
+                GreetingsTopology.TOPIC_SPANISH_GREETINGS,
+                GreetingsTopology.TOPIC_GREETINGS_UPPERCASE));
 
         var greetingsTopology = GreetingsTopology.buildTopology();
         try {

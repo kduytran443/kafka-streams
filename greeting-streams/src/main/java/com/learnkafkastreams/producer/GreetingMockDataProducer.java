@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.learnkafkastreams.domain.Greeting;
+import com.learnkafkastreams.topology.GreetingsTopology;
 import lombok.extern.slf4j.Slf4j;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,8 +15,6 @@ import static com.learnkafkastreams.producer.ProducerUtil.publishMessageSync;
 @Slf4j
 public class GreetingMockDataProducer {
 
-    static String GREETINGS = "greetings";
-
     public static void main(String[] args) {
         ObjectMapper objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
@@ -24,7 +22,6 @@ public class GreetingMockDataProducer {
 
         englishGreetings(objectMapper);
         spanishGreetings(objectMapper);
-
     }
 
     private static void spanishGreetings(ObjectMapper objectMapper) {
@@ -37,7 +34,7 @@ public class GreetingMockDataProducer {
                 .forEach(greeting -> {
                     try {
                         var greetingJSON = objectMapper.writeValueAsString(greeting);
-                        var recordMetaData = publishMessageSync(GREETINGS, null, greetingJSON);
+                        var recordMetaData = publishMessageSync(GreetingsTopology.TOPIC_SPANISH_GREETINGS, null, greetingJSON);
                         log.info("Published the alphabet message : {} ", recordMetaData);
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
@@ -55,13 +52,11 @@ public class GreetingMockDataProducer {
                 .forEach(greeting -> {
                     try {
                         var greetingJSON = objectMapper.writeValueAsString(greeting);
-                        var recordMetaData = publishMessageSync(GREETINGS, null, greetingJSON);
+                        var recordMetaData = publishMessageSync(GreetingsTopology.TOPIC_GREETINGS, null, greetingJSON);
                         log.info("Published the alphabet message : {} ", recordMetaData);
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
                 });
     }
-
 }
-

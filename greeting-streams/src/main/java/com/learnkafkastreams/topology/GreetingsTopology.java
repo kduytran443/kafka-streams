@@ -1,5 +1,6 @@
 package com.learnkafkastreams.topology;
 
+import com.learnkafkastreams.domain.Greeting;
 import com.learnkafkastreams.serdes.SerdesFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
@@ -33,15 +34,28 @@ public class GreetingsTopology {
         var modifiedStream = mergedStream
                 .peek((key, value) -> log.info("Before: {}", value))
                 .mapValues(value -> {
-                    value.setMessage(value.getMessage().toUpperCase());
+                    try {
+                        handleUppercaseWithException(value);
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                        return null;
+                    }
                     return value;
-                });
+                })
+                .filter((key, value) -> value != null);
 
         // Sink processor
         modifiedStream.to(TOPIC_GREETINGS_UPPERCASE, Produced.with(Serdes.String(), SerdesFactory.greetingSerdesUsingGeneric()));
         modifiedStream.peek((key, value) -> log.info("[GREETING_UPPERCASE] {}: {}", key, value));
 
         return builder.build();
+    }
+
+    private static void handleUppercaseWithException(Greeting greeting) {
+        if ("ERROR".equals(greeting.getMessage())) {
+            throw new IllegalArgumentException();
+        }
+        greeting.setMessage(greeting.getMessage().toUpperCase());
     }
 
     public static Topology buildOldTopology() {

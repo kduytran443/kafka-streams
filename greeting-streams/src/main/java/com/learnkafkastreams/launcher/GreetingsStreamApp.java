@@ -1,5 +1,6 @@
 package com.learnkafkastreams.launcher;
 
+import com.learnkafkastreams.exception.StreamDeserializationExceptionHandler;
 import com.learnkafkastreams.topology.GreetingsTopology;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -52,6 +53,8 @@ public class GreetingsStreamApp {
         boostrapProperties.put(StreamsConfig.APPLICATION_ID_CONFIG, "greetings-stream-app");
         boostrapProperties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092");
         boostrapProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        boostrapProperties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG,
+                StreamDeserializationExceptionHandler.class);
         return boostrapProperties;
     }
 

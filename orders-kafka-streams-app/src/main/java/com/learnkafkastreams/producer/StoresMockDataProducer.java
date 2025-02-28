@@ -40,7 +40,7 @@ public class StoresMockDataProducer {
                 .forEach(store -> {
                     try {
                         var storeJSON = objectMapper.writeValueAsString(store);
-                        var recordMetaData = publishMessageSync(OrdersTopology.STORES, store.locationId(), storeJSON);
+                        var recordMetaData = publishMessageSync(OrdersTopology.TOPIC_STORES, store.locationId(), storeJSON);
                         log.info("Published the store message : {} ", recordMetaData);
                     } catch (JsonProcessingException e) {
                         log.error("JsonProcessingException : {} ", e.getMessage(), e);

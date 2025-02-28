@@ -24,9 +24,8 @@ public class OrdersMockDataProducer {
         ObjectMapper objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        //publishOrders(objectMapper, buildOrders());
-        publishBulkOrders(objectMapper);
-
+        publishOrders(objectMapper, buildOrders());
+//        publishBulkOrders(objectMapper);
     }
 
     private static List<Order> buildOrders() {
@@ -77,9 +76,8 @@ public class OrdersMockDataProducer {
     }
 
     private static void publishBulkOrders(ObjectMapper objectMapper) throws InterruptedException {
-
         int count = 0;
-        while(count < 100){
+        while (count < 100) {
             var orders = buildOrders();
             publishOrders(objectMapper, orders);
             sleep(1000);
@@ -88,22 +86,18 @@ public class OrdersMockDataProducer {
     }
 
     private static void publishOrders(ObjectMapper objectMapper, List<Order> orders) {
-
-        orders
-                .forEach(order -> {
-                    try {
-                        var ordersJSON = objectMapper.writeValueAsString(order);
-                        var recordMetaData = publishMessageSync(OrdersTopology.ORDERS, order.orderId()+"", ordersJSON);
-                        log.info("Published the order message : {} ", recordMetaData);
-                    } catch (JsonProcessingException e) {
-                        log.error("JsonProcessingException : {} ", e.getMessage(), e);
-                        throw new RuntimeException(e);
-                    }
-                    catch (Exception e) {
-                        log.error("Exception : {} ", e.getMessage(), e);
-                        throw new RuntimeException(e);
-                    }
-                });
+        orders.forEach(order -> {
+            try {
+                var ordersJSON = objectMapper.writeValueAsString(order);
+                var recordMetaData = publishMessageSync(OrdersTopology.TOPIC_ORDERS, order.orderId() + "", ordersJSON);
+                log.info("Published the order message : {} ", recordMetaData);
+            } catch (JsonProcessingException e) {
+                log.error("JsonProcessingException : {} ", e.getMessage(), e);
+                throw new RuntimeException(e);
+            } catch (Exception e) {
+                log.error("Exception : {} ", e.getMessage(), e);
+                throw new RuntimeException(e);
+            }
+        });
     }
-
 }

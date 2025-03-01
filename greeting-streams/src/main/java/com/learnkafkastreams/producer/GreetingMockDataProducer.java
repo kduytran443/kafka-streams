@@ -28,7 +28,7 @@ public class GreetingMockDataProducer {
         var spanishGreetings = List.of(
                 new Greeting("Hello, Good Morning!", LocalDateTime.now()),
                 new Greeting("Hello, Good Evening!", LocalDateTime.now()),
-                new Greeting("Hello, Good Night!", LocalDateTime.now())
+                new Greeting(null, LocalDateTime.now())
         );
         spanishGreetings
                 .forEach(greeting -> {

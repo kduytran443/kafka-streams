@@ -2,6 +2,7 @@ package com.learnkafkastreams.topology;
 
 import com.learnkafkastreams.domain.Greeting;
 import com.learnkafkastreams.serdes.SerdesFactory;
+import com.learnkafkastreams.service.DeadLetterService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
@@ -10,6 +11,7 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Produced;
 import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 public class GreetingsTopology {
@@ -22,26 +24,41 @@ public class GreetingsTopology {
         StreamsBuilder builder = new StreamsBuilder();
 
         // Create greetingStream by defining Topic, Serdes
-        var greetingsStream = builder.stream(TOPIC_GREETINGS, Consumed.with(Serdes.String(), SerdesFactory.greetingSerdesUsingGeneric()));
+        var greetingsStream = builder.stream(TOPIC_GREETINGS, Consumed.with(Serdes.String(),
+                SerdesFactory.greetingSerdesUsingGeneric()));
         greetingsStream.peek((key, value) -> log.info("[GREETING] {}: {}", key, value));
 
-        var spanishGreetingsStream = builder.stream(TOPIC_SPANISH_GREETINGS, Consumed.with(Serdes.String(), SerdesFactory.greetingSerdesUsingGeneric()));
+        var spanishGreetingsStream = builder.stream(TOPIC_SPANISH_GREETINGS,
+                Consumed.with(Serdes.String(), SerdesFactory.greetingSerdesUsingGeneric()));
         spanishGreetingsStream.peek((key, value) -> log.info("[SPANISH] {}: {}", key, value));
 
         var mergedStream = greetingsStream.merge(spanishGreetingsStream);
 
+        List<StreamExceptionHandler<String, Greeting, ? extends Exception>> handlers = List.of(
+                StreamExceptionHandler.of(IllegalArgumentException.class, (key, value) -> {
+                    log.error("ERROR in StreamExceptionHandler {}", value);
+                }, true),
+                StreamExceptionHandler.of(NullPointerException.class, (key, value) -> {
+                    log.error("Bad null pointer {}", value);
+                }, true)
+        );
+
         // Processing logic
         var modifiedStream = mergedStream
                 .peek((key, value) -> log.info("Before: {}", value))
-                .mapValues(value -> {
-                    try {
-                        handleUppercaseWithException(value);
-                    } catch (Exception e) {
-                        log.error(e.getMessage(), e);
-                        return null;
-                    }
-                    return value;
-                })
+//                .mapValues(value -> {
+//                    try {
+//                        handleUppercaseWithException(value);
+//                    } catch (Exception e) {
+//                        log.error(e.getMessage(), e);
+//                        return null;
+//                    }
+//                    return value;
+//                })
+                .map(SafeStreamHandler.safeHandleForMap((key, value) -> {
+                    handleUppercaseWithException(value);
+                    return KeyValue.pair(key, value);
+                }, new DeadLetterService(), handlers))
                 .filter((key, value) -> value != null);
 
         // Sink processor

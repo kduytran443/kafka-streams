@@ -1,6 +1,8 @@
 package com.learnkafkastreams.launcher;
 
 import com.learnkafkastreams.exception.StreamDeserializationExceptionHandler;
+import com.learnkafkastreams.exception.StreamSerializationExceptionHandler;
+import com.learnkafkastreams.topology.ExploreKTableTopology;
 import com.learnkafkastreams.topology.GreetingsTopology;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -33,11 +35,13 @@ public class GreetingsStreamApp {
         createTopics(boostrapProperties,
                 List.of(GreetingsTopology.TOPIC_GREETINGS,
                 GreetingsTopology.TOPIC_SPANISH_GREETINGS,
-                GreetingsTopology.TOPIC_GREETINGS_UPPERCASE));
+                GreetingsTopology.TOPIC_GREETINGS_UPPERCASE,
+                        ExploreKTableTopology.TOPIC_WORDS));
 
         var greetingsTopology = GreetingsTopology.buildTopology();
+        var wordsTopology = ExploreKTableTopology.buildTopology();
         try {
-            var kafkaStreams = new KafkaStreams(greetingsTopology, boostrapProperties);
+            var kafkaStreams = new KafkaStreams(wordsTopology, boostrapProperties);
             // Add shutdown hook
             Runtime.getRuntime().addShutdownHook(new Thread(kafkaStreams::close));
 
@@ -55,6 +59,8 @@ public class GreetingsStreamApp {
         boostrapProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         boostrapProperties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG,
                 StreamDeserializationExceptionHandler.class);
+        boostrapProperties.put(StreamsConfig.DEFAULT_PRODUCTION_EXCEPTION_HANDLER_CLASS_CONFIG,
+                StreamSerializationExceptionHandler.class);
         return boostrapProperties;
     }
 

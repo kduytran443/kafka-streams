@@ -21,27 +21,24 @@ public class AggregatingStreamPlayGroundApp {
 
 
     public static void main(String[] args) {
-
-      var kTableTopology = ExploreAggregateOperatorsTopology.build();
+        var kTableTopology = ExploreAggregateOperatorsTopology.build();
 
         Properties config = new Properties();
         config.put(StreamsConfig.APPLICATION_ID_CONFIG, "stateful-operation"); // consumer group
-        config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092");
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         config.put(DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
-
         createTopics(config, List.of(AGGREGATE));
-         var kafkaStreams = new KafkaStreams(kTableTopology, config);
+        var kafkaStreams = new KafkaStreams(kTableTopology, config);
 
-       // Runtime.getRuntime().addShutdownHook(new Thread(kafkaStreams::close));
+        // Runtime.getRuntime().addShutdownHook(new Thread(kafkaStreams::close));
 
         log.info("Starting Greeting streams");
         kafkaStreams.start();
     }
 
     private static void createTopics(Properties config, List<String> greetings) {
-
         AdminClient admin = AdminClient.create(config);
         var partitions = 1;
         short replication  = 1;

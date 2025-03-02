@@ -17,10 +17,19 @@ public class ExploreAggregateOperatorsTopology {
 
     public static String AGGREGATE = "aggregate";
 
-    public static Topology build(){
+    public static Topology build() {
         StreamsBuilder streamsBuilder = new StreamsBuilder();
+
+        var inputStream = streamsBuilder.stream(AGGREGATE, Consumed.with(Serdes.String(), Serdes.String()));
+
+        var groupedStream = inputStream.groupByKey(Grouped.with(Serdes.String(), Serdes.String()));
+        exploreCount(groupedStream);
 
         return streamsBuilder.build();
     }
 
+    private static void exploreCount(KGroupedStream<String, String> groupedStream) {
+        KTable<String, Long> countStream = groupedStream.count(Named.as("count-per-alphabet"));
+        countStream.toStream().print(Printed.<String, Long>toSysOut().withLabel("count-per-alphabet"));
+    }
 }

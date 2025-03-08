@@ -40,14 +40,29 @@ public class ExploreJoinsOperatorsTopology {
 
     private static void joinKStreamWithKTable(StreamsBuilder builder) {
         var alphabetStream = builder.stream(ALPHABETS, Consumed.with(Serdes.String(), Serdes.String()));
-        alphabetStream.print(Printed.<String, String>toSysOut().withLabel("alphabets_abbreviations"));
+        alphabetStream.print(Printed.<String, String>toSysOut().withLabel("alphabets"));
 
         var alphabetAbbreviationTable = builder.table(ALPHABETS_ABBREVIATIONS, Consumed.with(Serdes.String(), Serdes.String()),
                 Materialized.as("alphabets_abbreviations-store"));
+        alphabetAbbreviationTable.toStream().print(Printed.<String, String>toSysOut().withLabel("alphabets_abbreviations"));
 
         ValueJoiner<String, String, Alphabet> joiner = Alphabet::new;
 
         var joinedStream = alphabetStream.join(alphabetAbbreviationTable, joiner);
         joinedStream.print(Printed.<String, Alphabet>toSysOut().withLabel("joined-stream"));
+    }
+
+    private static void joinKTableWithKTable(StreamsBuilder builder) {
+        var alphabetTable = builder.table(ALPHABETS, Consumed.with(Serdes.String(), Serdes.String()),
+                Materialized.as("alphabets-store-ttt"));
+        alphabetTable.toStream().print(Printed.<String, String>toSysOut().withLabel("alphabets"));
+
+        var alphabetAbbreviationTable = builder.table(ALPHABETS_ABBREVIATIONS, Consumed.with(Serdes.String(), Serdes.String()),
+                Materialized.as("alphabets_abbreviations-store-ttt"));
+        alphabetAbbreviationTable.toStream().print(Printed.<String, String>toSysOut().withLabel("alphabets_abbreviations"));
+
+        ValueJoiner<String, String, Alphabet> joiner = Alphabet::new;
+        var joinedStream = alphabetTable.join(alphabetAbbreviationTable, joiner);
+        joinedStream.toStream().print(Printed.<String, Alphabet>toSysOut().withLabel("joined-stream"));
     }
 }

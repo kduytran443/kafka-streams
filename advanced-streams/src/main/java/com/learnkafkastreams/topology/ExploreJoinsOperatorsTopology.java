@@ -34,7 +34,8 @@ public class ExploreJoinsOperatorsTopology {
 
         KeyValueMapper<String, String, String> keyValueMapper = (leftKey, rightKey) -> leftKey;
 
-        alphabetStream.join(alphabetAbbreviationGlobalTable, keyValueMapper, joiner);
+        var joinedStream = alphabetStream.join(alphabetAbbreviationGlobalTable, keyValueMapper, joiner);
+        joinedStream.print(Printed.<String, Alphabet>toSysOut().withLabel("joined-stream"));
     }
 
     private static void joinKStreamWithKTable(StreamsBuilder builder) {

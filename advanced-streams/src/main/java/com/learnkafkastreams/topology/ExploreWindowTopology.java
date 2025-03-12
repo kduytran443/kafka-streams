@@ -18,9 +18,24 @@ public class ExploreWindowTopology {
     public static Topology build(){
         StreamsBuilder streamsBuilder = new StreamsBuilder();
 
+        KStream<String, String> kStream = streamsBuilder.stream(WINDOW_WORDS);
+        exploreTumblingWindow(kStream);
+
         return streamsBuilder.build();
     }
 
+    private static void exploreTumblingWindow(KStream<String, String> kStream) {
+        kStream.print(Printed.<String, String>toSysOut().withLabel("windows-words-beginning"));
+
+        Duration duration = Duration.ofSeconds(5);
+        TimeWindows tumblingWindow = TimeWindows.ofSizeWithNoGrace(duration);
+
+        var windowStream = kStream.groupByKey()
+                .windowedBy(tumblingWindow)
+                .count();
+
+        windowStream.toStream().peek(ExploreWindowTopology::printLocalDateTimes);
+    }
 
     private static void printLocalDateTimes(Windowed<String> key, Long value) {
         var startTime = key.window().startTime();
